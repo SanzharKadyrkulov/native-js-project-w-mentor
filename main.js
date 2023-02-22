@@ -79,3 +79,5 @@ addForm.addEventListener('submit', (e) => {
 	descriptionInp.value = '';
 	imageInp.value = '';
 });
+
+console.log('hello');
