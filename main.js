@@ -1,9 +1,11 @@
+//? json-server -w db.json -p 8000
+
 //? АПИ для запросов
 const API = 'http://localhost:8000/products';
 
 //? блок куда мы добавляем карточки
 const list = document.querySelector('#products-list');
-
+//? форма с инпутами для ввода данных
 const addForm = document.querySelector('#add-form');
 const titleInp = document.querySelector('#title');
 const priceInp = document.querySelector('#price');
@@ -19,8 +21,9 @@ async function getProducts() {
 	//? отображаем актуальные данные
 	render(data);
 }
-
+//? функция для добавления в db.json
 async function addProducts(product) {
+	//? await для того чтобы getProducts подождала пока данные добавятся
 	await fetch(API, {
 		method: 'POST',
 		body: JSON.stringify(product),
@@ -28,6 +31,7 @@ async function addProducts(product) {
 			'Content-Type': 'application/json',
 		},
 	});
+	//? стянуть и отоброзить актуальные данные
 	getProducts();
 }
 
@@ -54,8 +58,12 @@ function render(arr) {
 	});
 }
 
+// ? обработчик события для добавления (CRAETE)
 addForm.addEventListener('submit', (e) => {
+	//? чтобы страница не перезагружалась
 	e.preventDefault();
+
+	// ? проверка на заполненность полей
 	if (
 		!titleInp.value.trim() ||
 		!priceInp.value.trim() ||
@@ -66,14 +74,17 @@ addForm.addEventListener('submit', (e) => {
 		return;
 	}
 
+	//? создаем объект для добавления в db.json
 	const product = {
 		title: titleInp.value,
 		price: priceInp.value,
 		description: descriptionInp.value,
 		image: imageInp.value,
 	};
+	//? отправляем объект в db.json
 	addProducts(product);
 
+	//? очищаем инпуты
 	titleInp.value = '';
 	priceInp.value = '';
 	descriptionInp.value = '';
