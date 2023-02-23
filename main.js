@@ -12,6 +12,14 @@ const priceInp = document.querySelector('#price');
 const descriptionInp = document.querySelector('#description');
 const imageInp = document.querySelector('#image');
 
+//? инпуты и кнопка из модалки
+const editTitleInp = document.querySelector('#edit-title');
+const editPriceInp = document.querySelector('#edit-price');
+const editDescriptionInp = document.querySelector('#edit-descr');
+const editImageInp = document.querySelector('#edit-image');
+const editSaveBtn = document.querySelector('#btn-save-edit');
+
+//? первоначальное отображение данных
 getProducts();
 
 //? Стягиваем данные с сервера
@@ -23,7 +31,7 @@ async function getProducts() {
 }
 //? функция для добавления в db.json
 async function addProducts(product) {
-	//? await для того чтобы getProducts подождала пока данные добавятся
+	//? await для того чтобы getProducts подождал пока данные добавятся
 	await fetch(API, {
 		method: 'POST',
 		body: JSON.stringify(product),
@@ -32,6 +40,35 @@ async function addProducts(product) {
 		},
 	});
 	//? стянуть и отоброзить актуальные данные
+	getProducts();
+}
+
+//? функция для удаления из db.json
+async function deleteProduct(id) {
+	//? await для того чтобы getProducts подождал пока данные удалятся
+	await fetch(`${API}/${id}`, {
+		method: 'DELETE',
+	});
+	//? стянуть и отоброзить актуальные данные
+	getProducts();
+}
+
+//? функция для получения одного продукта
+async function getOneProduct(id) {
+	const res = await fetch(`${API}/${id}`);
+	const data = await res.json(); // ? расшифровка данных
+	return data; //? возвращаем продукт с db.json
+}
+
+//? функция чтобы изменить данные
+async function editProduct(id, editedProduct) {
+	await fetch(`${API}/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(editedProduct),
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	});
 	getProducts();
 }
 
@@ -44,7 +81,7 @@ function render(arr) {
 		<div class="card m-5" style="width: 18rem">
 			<img
 				src="${item.image}"
-				class="card-img-top"
+				class="card-img-top w-100"
 				alt="..."
 			/>
 			<div class="card-body">
@@ -52,7 +89,9 @@ function render(arr) {
 				<p class="card-text">${item.description.slice(0, 70)}...</p>
 				<p class="card-text">$ ${item.price}</p>
 				<button id="${item.id}" class="btn btn-danger btn-delete">DELETE</button>
-				<button id="${item.id}" class="btn btn-dark btn-edit">EDIT</button>
+				<button data-bs-toggle="modal" data-bs-target="#exampleModal" id="${
+					item.id
+				}" class="btn btn-dark btn-edit">EDIT</button>
 			</div>
 		</div>`;
 	});
@@ -91,4 +130,53 @@ addForm.addEventListener('submit', (e) => {
 	imageInp.value = '';
 });
 
-console.log('hello');
+// ? обработчик события для удаления (DELETE)
+document.addEventListener('click', (e) => {
+	if (e.target.classList.contains('btn-delete')) {
+		deleteProduct(e.target.id);
+	}
+});
+
+//? переменная чтобы сохранить id продукта на который мы нажали
+let id = null;
+//? обработчик события на открытие и заполнение модалки
+document.addEventListener('click', async (e) => {
+	if (e.target.classList.contains('btn-edit')) {
+		//? сохраняем id продукта
+		id = e.target.id;
+		//? получаем объект продукта на который мы нажали
+		//? await потому что getOneProduct асинхронная функция
+		const product = await getOneProduct(e.target.id);
+
+		//? заполняем инпуты данными продукта
+		editTitleInp.value = product.title;
+		editPriceInp.value = product.price;
+		editDescriptionInp.value = product.description;
+		editImageInp.value = product.image;
+	}
+});
+
+//? обработчик события на сохранение данных
+editSaveBtn.addEventListener('click', () => {
+	//? проверка на пустату инпутов
+	if (
+		!editTitleInp.value.trim() ||
+		!editPriceInp.value.trim() ||
+		!editDescriptionInp.value.trim() ||
+		!editImageInp.value.trim()
+	) {
+		alert('Заполните все поля');
+		//? если хотя бы один инпут пустой выводим предупреждение и останавливаем функцию
+		return;
+	}
+
+	//? собираем измененный объект для изменения продукта
+	const editedProduct = {
+		title: editTitleInp.value,
+		price: editPriceInp.value,
+		description: editDescriptionInp.value,
+		image: editImageInp.value,
+	};
+	//? вызываем функцию для изменения
+	editProduct(id, editedProduct);
+});
