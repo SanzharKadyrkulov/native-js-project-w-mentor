@@ -19,12 +19,32 @@ const editDescriptionInp = document.querySelector('#edit-descr');
 const editImageInp = document.querySelector('#edit-image');
 const editSaveBtn = document.querySelector('#btn-save-edit');
 
+//? инпут для поиска
+const searchInput = document.querySelector('#search');
+//? переменная по которой делаем запрос на поиск
+let searchVal = '';
+
+//? то где отображаем кнопки для пагинации
+const paginationList = document.querySelector('.pagination-list');
+const prev = document.querySelector('.prev');
+const next = document.querySelector('.next');
+//? максимальное количество продуктов на одной странице
+const limit = 3;
+//? текущая страница
+let currentPage = 1;
+//? максимальное количество страниц
+let pageTotalCount = 1;
+
 //? первоначальное отображение данных
 getProducts();
 
 //? Стягиваем данные с сервера
 async function getProducts() {
-	const res = await fetch(API);
+	const res = await fetch(
+		`${API}?title_like=${searchVal}&_limit=${limit}&_page=${currentPage}`
+	);
+	const count = res.headers.get('x-total-count');
+	pageTotalCount = Math.ceil(count / limit);
 	const data = await res.json(); // ? расшивровка данных
 	//? отображаем актуальные данные
 	render(data);
@@ -95,6 +115,7 @@ function render(arr) {
 			</div>
 		</div>`;
 	});
+	renderPagination();
 }
 
 // ? обработчик события для добавления (CRAETE)
@@ -179,4 +200,61 @@ editSaveBtn.addEventListener('click', () => {
 	};
 	//? вызываем функцию для изменения
 	editProduct(id, editedProduct);
+});
+
+//? обработчик события для поиска
+searchInput.addEventListener('input', () => {
+	searchVal = searchInput.value;
+	currentPage = 1;
+	getProducts();
+});
+
+//? функция для отображения кнопок для пагинации
+function renderPagination() {
+	paginationList.innerHTML = '';
+	for (let i = 1; i <= pageTotalCount; i++) {
+		paginationList.innerHTML += `
+			<li class="page-item ${currentPage == i ? 'active' : ''}">
+				<button class="page-link page_number">${i}</button>
+			</li>`;
+	}
+
+	//? чтобы кропка prev была неактивна на первой странице
+	if (currentPage == 1) {
+		prev.classList.add('disabled');
+	} else {
+		prev.classList.remove('disabled');
+	}
+	//? чтобы кропка next была неактивна на последней странице
+	if (currentPage == pageTotalCount) {
+		next.classList.add('disabled');
+	} else {
+		next.classList.remove('disabled');
+	}
+}
+
+//? обработчик события чтобы перейти на определенную страницу
+document.addEventListener('click', (e) => {
+	if (e.target.classList.contains('page_number')) {
+		currentPage = e.target.innerText;
+		getProducts();
+	}
+});
+
+//? обработчик события чтобы перейти на следующую страницу
+next.addEventListener('click', () => {
+	if (currentPage == pageTotalCount) {
+		return;
+	}
+	currentPage++;
+	getProducts();
+});
+
+//? обработчик события чтобы перейти на предыдущую страницу
+prev.addEventListener('click', () => {
+	if (currentPage == 1) {
+		return;
+	}
+	currentPage--;
+	getProducts();
 });
