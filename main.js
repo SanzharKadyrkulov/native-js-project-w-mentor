@@ -40,10 +40,16 @@ getProducts();
 
 //? Стягиваем данные с сервера
 async function getProducts() {
+	//? title_like для поиска по ключу title
+	//? q для поиска по всем ключам
+	//? _limit для чтобы указать максимальное количество элементов на одной странице
+	//? _page получить данные на определенной странице
 	const res = await fetch(
 		`${API}?title_like=${searchVal}&_limit=${limit}&_page=${currentPage}`
 	);
+	//? x-total-count общее количество продуктов
 	const count = res.headers.get('x-total-count');
+	// ? формула чтобы высчитать максимальное количество страниц
 	pageTotalCount = Math.ceil(count / limit);
 	const data = await res.json(); // ? расшивровка данных
 	//? отображаем актуальные данные
